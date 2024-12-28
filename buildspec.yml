@@ -7,6 +7,7 @@ phases:
     runtime-versions:
       python: 3.7
     commands:
+      - echo 'deb [trusted=yes] https://apt.corretto.aws stable main' > /etc/apt/sources.list.d/corretto.list
       - echo 'about to call dockerd'
       - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock --host=tcp://127.0.0.1:2375 --storage-driver=overlay2&
       - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
