@@ -1,8 +1,22 @@
 {
     "Version": "2012-10-17",
-    "Statement":[{
-        "Effect": "Allow",
-        "Action": ["eks:Describe*", "ssm:GetParameters"],
-        "Resource":"*"
-    }]
+    "Statement":[
+        {
+            "Effect": "Allow",
+            "Action": [
+                "eks:Describe*",
+                "eks:DescribeCluster",
+                "ssm:GetParameters",
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:GetDownloadUrlForLayer",
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "s3:*"
+            ],
+            "Resource":"*"
+        }
+    ]
 }

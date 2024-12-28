@@ -4,7 +4,8 @@
         {
             "Effect": "Allow",
             "Principal": {
-                "AWS": "arn:aws:iam::519002666132:root"
+                "AWS": "arn:aws:iam::277707111654:root",
+                "Service": "codebuild.amazonaws.com"
             },
             "Action": "sts:AssumeRole"
         }
