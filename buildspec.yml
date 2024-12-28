@@ -48,6 +48,8 @@ phases:
       - ls -l
       - echo 'Installing Python dependencies'
       - pip install -r requirements.txt
+      - echo 'Running tests'
+      - python -m pytest test_main.py
   build:
     commands:
       - echo 'Building Docker image'

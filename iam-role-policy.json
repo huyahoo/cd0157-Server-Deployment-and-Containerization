@@ -5,16 +5,7 @@
             "Effect": "Allow",
             "Action": [
                 "eks:Describe*",
-                "eks:DescribeCluster",
-                "ssm:GetParameters",
-                "ecr:GetAuthorizationToken",
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:GetDownloadUrlForLayer",
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
-                "s3:*"
+                "ssm:GetParameters"
             ],
             "Resource":"*"
         }
