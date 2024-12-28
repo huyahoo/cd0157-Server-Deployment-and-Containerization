@@ -58,7 +58,7 @@ phases:
       - echo 'Pushing Docker image to ECR'
       - docker push $REPOSITORY_URI:$TAG
       - echo 'Updating Kubernetes configuration'
-      - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --role-arn $EKS_KUBECTL_ROLE_ARN --region us-east-1
+      - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --role-arn $EKS_KUBECTL_ROLE_ARN
       - echo 'Deploying application to Kubernetes cluster'
       - kubectl apply -f simple_jwt_api.yml
       - echo 'Generating build artifact JSON'
