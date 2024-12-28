@@ -5,7 +5,12 @@
             "Effect": "Allow",
             "Action": [
                 "eks:Describe*",
-                "ssm:GetParameters"
+                "ssm:GetParameters",
+                "sts:AssumeRole",
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage"
             ],
             "Resource":"*"
         }
