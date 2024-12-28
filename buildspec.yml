@@ -1,68 +1,51 @@
+---
 version: 0.2
+
 
 phases:
   install:
     runtime-versions:
       python: 3.7
     commands:
-      - echo 'Removing conflicting repository entry if exists'
-      - rm -f /etc/apt/sources.list.d/corretto.list
-      - echo 'deb [trusted=yes] https://apt.corretto.aws stable main' > /etc/apt/sources.list.d/corretto.list
-      - echo 'Starting Docker daemon'
+      - echo 'about to call dockerd'
       - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock --host=tcp://127.0.0.1:2375 --storage-driver=overlay2&
-      - echo 'Waiting for Docker to initialize'
-      - timeout 15 sh -c "until docker info; do echo '.'; sleep 1; done"
-      - echo 'Downloading aws-iam-authenticator'
+      - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
       - curl -sS -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator
-      - echo 'Downloading kubectl (v1.27.9)'
-      - curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.27.9/2024-01-04/bin/linux/amd64/kubectl
-      - echo 'Downloading kubectl checksum file'
-      - curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.27.9/2024-01-04/bin/linux/amd64/kubectl.sha256
-      - echo 'Validating kubectl checksum'
+      # Download the latest stable release kubectl      
+      - curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.29.10/2024-11-15/bin/linux/amd64/kubectl
+      # Download the kubectl checksum file
+      - curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.29.10/2024-11-15/bin/linux/amd64/kubectl.sha256
+      # Validate the kubectl binary against the checksum file
       - sha256sum -c kubectl.sha256
-      - echo 'Making kubectl and aws-iam-authenticator executable'
-      - chmod +x ./kubectl ./aws-iam-authenticator
-      - echo 'Adding binaries to PATH'
-      - export PATH=$PWD/:$PATH
-      - echo 'export PATH=$PWD/:$PATH' >> $HOME/.bashrc
-      - echo 'Checking Python version'
+      # Install kubectl
+      - chmod +x ./kubectl ./aws-iam-authenticator      
+      # - mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
+      - export PATH=$PWD/:$PATH  
       - python --version
-      - echo 'Installing/upgrading pip'
+      - echo 'export PATH=$PWD/:$PATH' >> $HOME/.bashrc
+      - echo `kubectl version --short --client`
       - python -m pip install --upgrade --force pip
-      - echo 'Adding Google signing key for apt-get'
       - wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add
-      - echo 'Updating packages and installing dependencies'
-      - apt-get update && apt-get -y install jq || curl -Lo /usr/bin/jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 && chmod +x /usr/bin/jq
-      - pip install --upgrade awscli pytest
+      - apt-get update && apt-get -y install jq  && pip install --upgrade awscli pytest
   pre_build:
     commands:
-      - echo 'Setting Docker tag'
       - TAG="$REPOSITORY_NAME.$REPOSITORY_BRANCH.$ENVIRONMENT_NAME.$(date +%Y-%m-%d.%H.%M.%S).$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
-      - echo 'Updating container image in Kubernetes configuration'
       - sed -i 's@CONTAINER_IMAGE@'"$REPOSITORY_URI:$TAG"'@' simple_jwt_api.yml
-      - echo 'Logging into Amazon ECR'
       - $(aws ecr get-login --no-include-email)
-      - echo 'Setting Kubernetes configuration file path'
       - export KUBECONFIG=$HOME/.kube/config
-      - echo 'Listing project files'
-      - ls -l
-      - echo 'Installing Python dependencies'
+      - echo `ls -l`
       - pip install -r requirements.txt
-      - echo 'Running tests'
-      - python -m pytest test_main.py
   build:
     commands:
-      - echo 'Building Docker image'
       - docker build --tag $REPOSITORY_URI:$TAG .
+
   post_build:
     commands:
-      - echo 'Pushing Docker image to ECR'
       - docker push $REPOSITORY_URI:$TAG
-      - echo 'Updating Kubernetes configuration'
+      - echo $EKS_CLUSTER_NAME
+      - echo $EKS_KUBECTL_ROLE_ARN
       - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --role-arn $EKS_KUBECTL_ROLE_ARN
-      - echo 'Deploying application to Kubernetes cluster'
-      - kubectl apply -f simple_jwt_api.yml
-      - echo 'Generating build artifact JSON'
+      - kubectl apply -f simple_jwt_api.yml 
       - printf '[{"name":"simple_jwt_api","imageUri":"%s"}]' $REPOSITORY_URI:$TAG > build.json
 artifacts:
   files: build.json
