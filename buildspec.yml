@@ -66,6 +66,7 @@ phases:
 artifacts:
   files:
     - simple_jwt_api.yml
+    - build.json
 env:
   parameter-store:         
     JWT_SECRET: JWT_SECRET
