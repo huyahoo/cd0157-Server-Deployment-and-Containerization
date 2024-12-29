@@ -143,10 +143,49 @@ kubectl get services
 
 ## Test
 ```bash
-# Test Endpoint
-kubectl get services simple-jwt-api -o wide
+# Switch Context to Kubernetes Cluster
+kubectl config use-context arn:aws:eks:us-east-1:915666190922:cluster/simple-jwt-api
 
-# use the external IP url to test the app
-export TOKEN=`curl -d '{"email":"<EMAIL>","password":"<PASSWORD>"}' -H "Content-Type: application/json" -X POST <EXTERNAL-IP URL>/auth  | jq -r '.token'`
-curl --request GET '<EXTERNAL-IP URL>/contents' -H "Authorization: Bearer ${TOKEN}" | jq 
+# Get the list of services running
+kubectl get services -o wide
+
+# Retrieve the ELB URL
+kubectl get services simple-jwt-api -o wide
+```
+
+Expected OUTPUT
+```sh
+NAME             TYPE           CLUSTER-IP       EXTERNAL-IP                                                              PORT(S)        AGE   SELECTOR
+simple-jwt-api   LoadBalancer   10.100.131.188   ac7b92c6016034116af3317f234c5dbe-419157341.us-east-1.elb.amazonaws.com   80:31815/TCP   11h   app=simple-jwt-api
+```
+
+[Endpoint](http://ac7b92c6016034116af3317f234c5dbe-419157341.us-east-1.elb.amazonaws.com) `http://ac7b92c6016034116af3317f234c5dbe-419157341.us-east-1.elb.amazonaws.com` 
+
+### TEST API
+1. Health Check:
+```bash
+curl http://ac7b92c6016034116af3317f234c5dbe-419157341.us-east-1.elb.amazonaws.com
+```
+- Expected OUTPUT
+```bash
+"Healthy"
+```
+2. Authentication:
+```bash
+curl -X POST -H "Content-Type: application/json" \
+-d '{"email": "test@example.com", "password": "testpassword"}' \
+http://ac7b92c6016034116af3317f234c5dbe-419157341.us-east-1.elb.amazonaws.com/auth
+```
+- Expected OUTPUT
+```bash
+{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3MzY2NDgwOTAsIm5iZiI6MTczNTQzODQ5MCwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIn0.Y-EtvTsybjtXkI6Z5DFhlgG1MBu3p8nfOUHjWKu5pQU"}
+```
+3. Get Contents:
+```bash
+curl -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3MzY2NDgwOTAsIm5iZiI6MTczNTQzODQ5MCwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIn0.Y-EtvTsybjtXkI6Z5DFhlgG1MBu3p8nfOUHjWKu5pQU" \
+http://ac7b92c6016034116af3317f234c5dbe-419157341.us-east-1.elb.amazonaws.com/contents
+```
+- Expected OUTPUT
+```bash
+{"email":"test@example.com","exp":1736648090,"nbf":1735438490}
 ```
